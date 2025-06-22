@@ -3,8 +3,9 @@ langchain
 flask
 pypdf
 python-dotenv
-pinecone-client  # replace pinecone[grpc]
+pinecone-client
 langchain-pinecone
 langchain_community
 langchain_openai
 langchain_experimental
+gunicorn
