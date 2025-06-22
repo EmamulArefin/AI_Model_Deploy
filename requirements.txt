@@ -9,7 +9,8 @@ langchain_community
 langchain_openai
 langchain_experimental
 langchain-pinecone
-langchain-huggingface  # <== ADDED: For the new HuggingFaceEmbeddings
+langchain-huggingface
+langchain-text-splitters # <== ADD THIS NEW PACKAGE
 
 # Vector DB and Embeddings model
 pinecone-client
