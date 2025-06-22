@@ -10,50 +10,44 @@ from dotenv import load_dotenv
 from src.prompt import system_prompt
 import os
 
-# Initialize Flask app
-app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend API calls
-
-# Load environment variables
+# Load environment variables from a .env file (for local development)
 load_dotenv()
 
-# Set API keys from .env
-os.environ["PINECONE_API_KEY"] = os.getenv('PINECONE_API_KEY')
-os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
-
-# Load embedding model
+# --- HEAVY LIFTING AT STARTUP ---
+# These will be loaded once before workers are created thanks to --preload
+print("Loading embeddings and connecting to Pinecone...")
 embeddings = download_hugging_face_embeddings()
-
-# Pinecone index name
 index_name = "medicalbot"
-
-# Load existing Pinecone vector index
 docsearch = PineconeVectorStore.from_existing_index(
     index_name=index_name,
     embedding=embeddings
 )
+print("Load complete.")
+# --------------------------------
 
-# Set up retriever
-retriever = docsearch.as_retriever(search_type="similarity", search_kwargs={"k": 3})
-
-# Load OpenAI LLM
+# --- LIGHTWEIGHT CONFIGURATION AT STARTUP ---
 llm = OpenAI(temperature=0.4, max_tokens=500)
-
-# Create prompt and chain
+retriever = docsearch.as_retriever(search_type="similarity", search_kwargs={"k": 3})
 prompt = ChatPromptTemplate.from_messages([
     ("system", system_prompt),
     ("human", "{input}")
 ])
-
 question_answer_chain = create_stuff_documents_chain(llm, prompt)
 rag_chain = create_retrieval_chain(retriever, question_answer_chain)
+# ---------------------------------------------
+
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)  # Enable CORS for frontend API calls
+
 
 # Health check
 @app.route("/", methods=["GET"])
 def index():
     return jsonify({"message": "API is live 🔥"}), 200
 
-# Prediction endpoint for Next.js
+# Prediction endpoint
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
@@ -63,21 +57,22 @@ def predict():
         if not symptoms:
             return jsonify({"error": "Symptoms field is required"}), 400
 
-        print("User Input:", symptoms)
+        print(f"Received input: {symptoms}")
 
         response = rag_chain.invoke({"input": symptoms})
         answer = response["answer"]
 
-        print("Model Output:", answer)
+        print(f"Generated answer: {answer}")
 
         return jsonify({"result": answer}), 200
 
     except Exception as e:
-        print("Error:", str(e))
-        return jsonify({"error": "Internal server error"}), 500
+        print(f"Error during prediction: {str(e)}")
+        return jsonify({"error": "An internal server error occurred"}), 500
 
 
+# This block is for running the app locally with `python app.py`
+# It will be ignored by Gunicorn on Render
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))  # fallback to 5000 locally
-    app.run(host="0.0.0.0", port=port)
-
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
