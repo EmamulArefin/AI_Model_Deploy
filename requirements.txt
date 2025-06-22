@@ -1,10 +1,20 @@
-sentence-transformers==2.2.2
-langchain
+# Web framework and server
 flask
-pypdf
-python-dotenv
-pinecone-client  # replace pinecone[grpc]
-langchain-pinecone
+flask-cors
+gunicorn
+
+# Core LangChain and integrations
+langchain
 langchain_community
 langchain_openai
 langchain_experimental
+langchain-pinecone
+langchain-huggingface  # <== ADDED: For the new HuggingFaceEmbeddings
+
+# Vector DB and Embeddings model
+pinecone-client
+sentence-transformers==2.2.2
+
+# Utilities
+pypdf
+python-dotenv
