@@ -10,11 +10,11 @@ langchain_openai
 langchain_experimental
 langchain-pinecone
 langchain-huggingface
-langchain-text-splitters # <== ADD THIS NEW PACKAGE
+langchain-text-splitters
 
 # Vector DB and Embeddings model
 pinecone-client
-sentence-transformers==2.2.2
+sentence-transformers==2.7.0  # <== UPDATED VERSION
 
 # Utilities
 pypdf
